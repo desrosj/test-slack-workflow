@@ -1,30 +1,13 @@
 name: Prepare WordPress for PHPUnit testing
 description: Sets up WordPress for PHPUnit testing.
 
-inputs:
-  php:
-    description: PHP version
-    required: true
-    default: '7.4'
-  memcached:
-    description: Whether to use Memcached
-    required: true
-    default: 'false'
-  phpunit-version:
-    description: PHPUnit version
-    required: false
-
 runs:
   using: "composite"
   steps:
     - name: Configure environment variables
-      shell: bash
       run: |
         echo "PHP_FPM_UID=$(id -u)" >> $GITHUB_ENV
         echo "PHP_FPM_GID=$(id -g)" >> $GITHUB_ENV
-        echo "LOCAL_PHP=${{ inputs.php }}-fpm" >> $GITHUB_ENV
-        echo "LOCAL_PHPUNIT=${{ inputs.phpunit && inputs.phpunit || inputs.php }}-fpm" >> $GITHUB_ENV
-        echo "LOCAL_PHP_MEMCACHED=${{ inputs.memcached }}" >> $GITHUB_ENV
 
     - name: Checkout repository
       uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f # v2.3.4
@@ -43,13 +26,13 @@ runs:
     # http://man7.org/linux/man-pages/man1/date.1.html
     - name: "Get last Monday's date"
       id: get-date
-      run: echo "::set-output name=date::$(/bin/date -u --date='last Mon' "+%F")"
       shell: bash
+      run: echo "::set-output name=date::$(/bin/date -u --date='last Mon' "+%F")"
 
     - name: Get Composer cache directory
       id: composer-cache
-      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
       shell: bash
+      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
     - name: Cache Composer dependencies
       uses: actions/cache@26968a09c0ea4f3e233fdddbafd1166051a095f6 # v2.1.4
@@ -60,6 +43,7 @@ runs:
         key: ${{ runner.os }}-php-${{ matrix.php }}-date-${{ steps.get-date.outputs.date }}-composer-${{ hashFiles('**/composer.json') }}
 
     - name: Install Composer dependencies
+      shell: bash
       run: |
         docker-compose run --rm php composer --version
 
@@ -69,50 +53,33 @@ runs:
         else
           docker-compose run --rm php composer update
         fi
-      shell: bash
-
-    - name: Docker debug information
-      run: |
-        docker -v
-        docker-compose -v
-      shell: bash
 
     - name: Start Docker environment
-      run: |
-        npm run env:start
       shell: bash
+      run: npm run env:start
 
     # The memcached server needs to start after the Docker network has been set up with `npm run env:start`.
     - name: Start the Memcached server.
+      shell: bash
       run: |
-        if [ ${{ inputs.memcached }} == 'true' ]; then
+        if [ ${{ env.LOCAL_PHP_MEMCACHED }} == 'true' ]; then
           cp tests/phpunit/includes/object-cache.php src/wp-content/object-cache.php
           docker run --name memcached --net $(basename "$PWD")_wpdevnet -d memcached
         fi
-      shell: bash
-
-    - name: General debug information
-      run: |
-        npm --version
-        node --version
-        curl --version
-        git --version
-        svn --version
-      shell: bash
 
     - name: Log running Docker containers
-      run: docker ps -a
       shell: bash
+      run: docker ps -a
 
     - name: WordPress Docker container debug information
+      shell: bash
       run: |
         docker-compose run --rm mysql mysql --version
         docker-compose run --rm php php --version
         docker-compose run --rm php php -m
         docker-compose run --rm php php -i
         docker-compose run --rm php locale -a
-      shell: bash
 
     - name: Install WordPress
-      run: npm run env:install
       shell: bash
+      run: npm run env:install
