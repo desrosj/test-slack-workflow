@@ -1,4 +1,5 @@
 name: Prepare WordPress for PHPUnit testing
+description: Sets up WordPress for PHPUnit testing.
 
 inputs:
   php:
@@ -6,6 +7,7 @@ inputs:
     required: true
     default: '7.4'
   memcached:
+    description: Whether to use Memcached
     required: true
     default: 'false'
   phpunit-version:
