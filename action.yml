@@ -7,7 +7,7 @@ inputs:
     default: '7.4'
   memcached:
     required: true
-    default: false
+    default: 'false'
   phpunit-version:
     description: PHPUnit version
     required: false
@@ -16,6 +16,7 @@ runs:
   using: "composite"
   steps:
     - name: Configure environment variables
+      shell: bash
       run: |
         echo "PHP_FPM_UID=$(id -u)" >> $GITHUB_ENV
         echo "PHP_FPM_GID=$(id -g)" >> $GITHUB_ENV
@@ -33,6 +34,7 @@ runs:
         cache: npm
 
     - name: Install Dependencies
+      shell: bash
       run: npm ci
 
     # This date is used to ensure that the Composer cache is refreshed at least once every week.
@@ -45,6 +47,7 @@ runs:
     - name: Get Composer cache directory
       id: composer-cache
       run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      shell: bash
 
     - name: Cache Composer dependencies
       uses: actions/cache@26968a09c0ea4f3e233fdddbafd1166051a095f6 # v2.1.4
@@ -64,15 +67,18 @@ runs:
         else
           docker-compose run --rm php composer update
         fi
+      shell: bash
 
     - name: Docker debug information
       run: |
         docker -v
         docker-compose -v
+      shell: bash
 
     - name: Start Docker environment
       run: |
         npm run env:start
+      shell: bash
 
     # The memcached server needs to start after the Docker network has been set up with `npm run env:start`.
     - name: Start the Memcached server.
@@ -80,6 +86,7 @@ runs:
       run: |
         cp tests/phpunit/includes/object-cache.php src/wp-content/object-cache.php
         docker run --name memcached --net $(basename "$PWD")_wpdevnet -d memcached
+      shell: bash
 
     - name: General debug information
       run: |
@@ -88,9 +95,11 @@ runs:
         curl --version
         git --version
         svn --version
+      shell: bash
 
     - name: Log running Docker containers
       run: docker ps -a
+      shell: bash
 
     - name: WordPress Docker container debug information
       run: |
@@ -99,6 +108,8 @@ runs:
         docker-compose run --rm php php -m
         docker-compose run --rm php php -i
         docker-compose run --rm php locale -a
+      shell: bash
 
     - name: Install WordPress
       run: npm run env:install
+      shell: bash
