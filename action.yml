@@ -55,8 +55,6 @@ runs:
         key: ${{ runner.os }}-php-${{ matrix.php }}-date-${{ steps.get-date.outputs.date }}-composer-${{ hashFiles('**/composer.json') }}
 
     - name: Install Composer dependencies
-      env:
-        - LOCAL_PHP:  ${{ inputs.php }}-fpm
       run: |
         docker-compose run --rm php composer --version
 
