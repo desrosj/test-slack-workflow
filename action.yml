@@ -10,15 +10,6 @@ runs:
         echo "PHP_FPM_UID=$(id -u)" >> $GITHUB_ENV
         echo "PHP_FPM_GID=$(id -g)" >> $GITHUB_ENV
 
-    - name: Checkout repository
-      uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f # v2.3.4
-
-    - name: Install NodeJS
-      uses: actions/setup-node@38d90ce44d5275ad62cc48384b3d8a58c500bb5f # v2.2.2
-      with:
-        node-version: 14
-        cache: npm
-
     - name: Install Dependencies
       shell: bash
       run: npm ci
