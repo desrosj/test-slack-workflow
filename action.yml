@@ -84,10 +84,11 @@ runs:
 
     # The memcached server needs to start after the Docker network has been set up with `npm run env:start`.
     - name: Start the Memcached server.
-      if: ${{ matrix.memcached }}
       run: |
-        cp tests/phpunit/includes/object-cache.php src/wp-content/object-cache.php
-        docker run --name memcached --net $(basename "$PWD")_wpdevnet -d memcached
+        if [ ${{ inputs.memcached }} == 'true' ]; then
+          cp tests/phpunit/includes/object-cache.php src/wp-content/object-cache.php
+          docker run --name memcached --net $(basename "$PWD")_wpdevnet -d memcached
+        fi
       shell: bash
 
     - name: General debug information
